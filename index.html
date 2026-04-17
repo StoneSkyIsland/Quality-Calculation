@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>能力素質計算-石頭天空島</title>
+    <style>
+        :root {
+            --primary-color: #27ae60;
+            --bg-color: #f0f2f5;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 10px;
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .header-img {
+            max-width: 600px;
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        /* 關鍵修改：強制同一排並支援滾動 */
+        .calc-wrapper {
+            overflow-x: auto; /* 當寬度不足時允許水平滑動 */
+            padding-bottom: 15px;
+        }
+
+        .calc-grid {
+            display: flex; /* 改用 Flex 佈局使元件並排 */
+            gap: 12px;
+            min-width: 1300px; /* 確保五個區塊有足夠的寬度並列 */
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .calc-card {
+            background: white;
+            flex: 0 0 250px; /* 固定每個卡片的寬度 */
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .card-header {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group label {
+            width: 75px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+        }
+
+        .result-box {
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 6px;
+            background-color: #fcfcfc;
+            border: 1px dashed #ccc;
+        }
+
+        .result-content {
+            font-family: "Consolas", monospace;
+            white-space: pre-line;
+            font-size: 12.5px;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .global-actions {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .btn-calc {
+            padding: 10px 40px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(39, 174, 96, 0.2);
+        }
+
+        .btn-calc:hover {
+            background-color: #219150;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #95a5a6;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-section">
+    <img src="header.png" alt="石器天空島" class="header-img" onerror="this.style.display='none'">
+    <h2 style="margin: 10px 0;">能力素質計算機</h2>
+</div>
+
+<div class="global-actions">
+    <button class="btn-calc" onclick="calculateAll()">一鍵更新全部</button>
+</div>
+
+<div class="calc-wrapper">
+    <div class="calc-grid" id="calcContainer">
+        </div>
+</div>
+
+<div class="footer">感謝十方&宸爸爸提供</div>
+
+<script>
+    const fieldNames = ["人攻", "人防", "人敏", "寵物血量", "寵攻", "寵防", "寵敏"];
+    const fieldIds = ["b2", "c2", "d2", "e2", "f2", "g2", "h2"];
+
+    function createBlocks() {
+        const container = document.getElementById('calcContainer');
+        for (let i = 1; i <= 5; i++) {
+            let html = `
+                <div class="calc-card">
+                    <div class="card-header">人物 #${i}</div>
+                    <div class="inputs">`;
+            
+            fieldIds.forEach((id, index) => {
+                html += `
+                    <div class="input-group">
+                        <label>${fieldNames[index]}</label>
+                        <input type="number" id="${id}_${i}" value="0" oninput="calculateSingle(${i})">
+                    </div>`;
+            });
+
+            html += `
+                    </div>
+                    <div class="result-box">
+                        <div id="result_${i}" class="result-content">請輸入數值...</div>
+                    </div>
+                </div>`;
+            container.innerHTML += html;
+        }
+    }
+
+    function calculateSingle(index) {
+        const b2 = parseFloat(document.getElementById(`b2_${index}`).value) || 0;
+        const c2 = parseFloat(document.getElementById(`c2_${index}`).value) || 0;
+        const d2 = parseFloat(document.getElementById(`d2_${index}`).value) || 0;
+        const e2 = parseFloat(document.getElementById(`e2_${index}`).value) || 0;
+        const f2 = parseFloat(document.getElementById(`f2_${index}`).value) || 0;
+        const g2 = parseFloat(document.getElementById(`g2_${index}`).value) || 0;
+        const h2 = parseFloat(document.getElementById(`h2_${index}`).value) || 0;
+
+        const denom = c2 + g2;
+        const m2_h_dmg_pct = denom !== 0 ? (g2 / denom * 100).toFixed(2) : 0;
+        const n2_p_dmg_pct = denom !== 0 ? (c2 / denom * 100).toFixed(2) : 0;
+        const rec_h_hp = n2_p_dmg_pct !== 0 ? Math.round(e2 * m2_h_dmg_pct / n2_p_dmg_pct) : 0;
+
+        const near_atk = (b2 * 0.8) + (f2 * 0.8);
+        const far_atk = (b2 * 1.0) + (f2 * 0.2);
+        const total_def = (c2 * 0.7) + (g2 * 0.7);
+        const near_agi = (d2 * 0.2) + (h2 * 0.8);
+        const far_agi = (d2 * 0.8) + (h2 * 0.2);
+
+        const resText = `推薦人血: ${Math.floor(rec_h_hp)}
+人損: ${m2_h_dmg_pct}% | 寵損: ${n2_p_dmg_pct}%
+-----------------------
+近攻擊: ${near_atk.toFixed(2)}
+遠攻擊: ${far_atk.toFixed(2)}
+總防禦: ${total_def.toFixed(2)}
+近攻敏: ${near_agi.toFixed(2)}
+遠攻敏: ${far_agi.toFixed(2)}`;
+
+        document.getElementById(`result_${index}`).innerText = resText;
+    }
+
+    function calculateAll() {
+        for (let i = 1; i <= 5; i++) {
+            calculateSingle(i);
+        }
+    }
+
+    createBlocks();
+</script>
+
+</body>
+</html>
